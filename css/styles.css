@@ -1,0 +1,107 @@
+/* Configuración de Fuentes */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Inter:wght@400;600;700;900&display=swap');
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f8fafc;
+    margin: 0;
+    overflow: hidden;
+    /* El scroll lo controlan los paneles internos */
+}
+
+/* Contenedor Principal Dividido */
+.main-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Panel Formulario (Ahora a la derecha) */
+.form-panel {
+    width: 400px;
+    background: white;
+    border-left: 1px solid #e2e8f0;
+    /* Borde del lado izquierdo porque el panel va a la derecha */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Panel Vista Previa (Ahora a la izquierda) */
+.preview-panel {
+    flex-grow: 1;
+    background: #cbd5e1;
+    overflow-y: auto;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Scrollbar moderno para el panel de preview */
+.preview-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.preview-panel::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
+.preview-panel::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+}
+
+.preview-panel::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Formato HOJA CARTA para la Bitácora - MEDIDAS EXACTAS */
+.letter-sheet {
+    width: 215.9mm;
+    height: 279.4mm;
+    /* Medida estricta para evitar deformación */
+    max-height: 279.4mm;
+    padding: 20mm;
+    margin-bottom: 30px;
+    background: white;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+}
+
+
+/* Estilos de Impresión */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body,
+    html {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        width: 215.9mm;
+    }
+
+    /* Quitamos el fondo gris del panel para que no salga en el PDF */
+    .preview-panel {
+        background: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        width: 100% !important;
+    }
+
+    .letter-sheet {
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 215.9mm !important;
+        height: 279.4mm !important;
+    }
+}
