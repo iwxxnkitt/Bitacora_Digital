@@ -1,4 +1,4 @@
-// 1. CONFIGURACIÓN DE TU BASE DE DATOS FIREBASE
+// 1. CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCwLE85BsJw5FwFtjUGLSCxHPJLXB8t4Nk",
   authDomain: "bitacora-db.firebaseapp.com",
@@ -17,10 +17,8 @@ const { useState, useEffect, useRef } = React;
 
 function App() {
     const printRef = useRef(null);
-    const [images, setImages] = useState([]);
     const [isSaved, setIsSaved] = useState(false);
     const [toast, setToast] = useState(null);
-    const [showResetModal, setShowResetModal] = useState(false);
 
     const [formData, setFormData] = useState({
         folio: "001",
@@ -45,11 +43,8 @@ function App() {
                 const ultimoFolio = parseInt(registros.folio);
                 const siguiente = String(ultimoFolio + 1).padStart(3, '0');
                 setFormData(prev => ({ ...prev, folio: siguiente }));
-            } else {
-                setFormData(prev => ({ ...prev, folio: "001" }));
             }
         });
-        
         if (window.lucide) window.lucide.createIcons();
     }, []);
 
@@ -61,7 +56,7 @@ function App() {
 
     const handleSave = () => {
         if (!formData.actividades.trim()) {
-            setToast({ type: 'error', title: 'Error', message: 'Escribe las actividades primero.' });
+            setToast({ type: 'error', message: 'Escribe las actividades primero.' });
             setTimeout(() => setToast(null), 3000);
             return;
         }
@@ -71,10 +66,10 @@ function App() {
             fechaRegistro: new Date().toLocaleString()
         }).then(() => {
             setIsSaved(true);
-            setToast({ type: 'success', title: '¡Sincronizado!', message: 'Guardado en la nube con éxito.' });
+            setToast({ type: 'success', message: '¡Guardado en la nube!' });
             setTimeout(() => setToast(null), 3000);
-        }).catch(err => {
-            setToast({ type: 'error', title: 'Error', message: 'No se pudo guardar.' });
+        }).catch(() => {
+            setToast({ type: 'error', message: 'Error al conectar.' });
             setTimeout(() => setToast(null), 3000);
         });
     };
@@ -83,9 +78,9 @@ function App() {
         const element = printRef.current;
         const opt = {
             margin: 0,
-            filename: `Bitacora_${formData.folio}_${formData.fecha}.pdf`,
+            filename: `Bitacora_${formData.folio}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).save();
@@ -99,104 +94,104 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
-            <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden border border-slate-200" ref={printRef}>
-                {/* ENCABEZADO DISEÑO ORIGINAL */}
-                <div className="bg-slate-900 p-8 text-white flex justify-between items-center border-b-4 border-amber-400">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-amber-400 p-3 rounded-xl text-slate-900">
-                            <i data-lucide="clipboard-list" className="w-8 h-8"></i>
+        <div className="min-h-screen bg-slate-100 p-4 md:p-10 font-sans">
+            <div className="max-w-4xl mx-auto bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl overflow-hidden border border-slate-200" ref={printRef}>
+                {/* HEADER PRO */}
+                <div className="bg-[#0f172a] p-10 text-white flex justify-between items-center border-b-[6px] border-amber-400">
+                    <div className="flex items-center gap-5">
+                        <div className="bg-amber-400 p-4 rounded-2xl text-slate-900 shadow-lg">
+                            <i data-lucide="clipboard-check" className="w-10 h-10"></i>
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black tracking-tighter uppercase italic">Bitácora Diaria</h1>
-                            <p className="text-slate-400 font-medium tracking-tight">Digital Shop Center | Reclutamiento</p>
+                            <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none">Bitácora Diaria</h1>
+                            <p className="text-slate-400 font-bold tracking-widest text-sm mt-1">DIGITAL SHOP CENTER | RECLUTAMIENTO</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">Folio de Control</div>
-                        <div className="text-4xl font-mono font-bold bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                        <div className="text-[10px] font-black text-amber-400 uppercase tracking-[0.3em] mb-2">Folio de Control</div>
+                        <div className="text-5xl font-mono font-black text-white bg-slate-800/50 px-6 py-3 rounded-2xl border border-slate-700 shadow-inner">
                             #{formData.folio}
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 space-y-8">
-                    {/* INFO BÁSICA */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="calendar" className="w-3 h-3 text-amber-500"></i> Fecha de Actividad
+                <div className="p-10 space-y-10">
+                    {/* FILA 1: FECHA Y HORAS */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="group space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="calendar" className="w-4 h-4 text-amber-500"></i> Fecha de Actividad
                             </label>
-                            <input type="date" name="fecha" value={formData.fecha} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-2 focus:border-amber-400 outline-none font-bold text-lg transition-all" />
+                            <input type="date" name="fecha" value={formData.fecha} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-3 focus:border-amber-400 outline-none font-black text-xl transition-all bg-transparent" />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="clock" className="w-3 h-3 text-amber-500"></i> Hora Entrada
+                        <div className="group space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="clock" className="w-4 h-4 text-amber-500"></i> Hora Entrada
                             </label>
-                            <input type="time" name="entrada" value={formData.entrada} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-2 focus:border-amber-400 outline-none font-bold text-lg transition-all" />
+                            <input type="time" name="entrada" value={formData.entrada} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-3 focus:border-amber-400 outline-none font-black text-xl transition-all bg-transparent" />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="clock-8" className="w-3 h-3 text-amber-500"></i> Hora Salida
+                        <div className="group space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="clock-9" className="w-4 h-4 text-amber-500"></i> Hora Salida
                             </label>
-                            <input type="time" name="salida" value={formData.salida} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-2 focus:border-amber-400 outline-none font-bold text-lg transition-all" />
+                            <input type="time" name="salida" value={formData.salida} onChange={handleInputChange} className="w-full border-b-2 border-slate-100 py-3 focus:border-amber-400 outline-none font-black text-xl transition-all bg-transparent" />
                         </div>
                     </div>
 
-                    {/* ÁREAS DE TEXTO */}
-                    <div className="space-y-6">
-                        <div className="group space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="file-text" className="w-3 h-3 text-amber-500"></i> Descripción de Actividades
+                    {/* DESCRIPCIÓN */}
+                    <div className="space-y-8">
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="align-left" className="w-4 h-4 text-amber-500"></i> Descripción detallada de Actividades
                             </label>
-                            <textarea name="actividades" value={formData.actividades} onChange={handleInputChange} rows="6" className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-50 outline-none transition-all resize-none font-medium text-slate-700 leading-relaxed" placeholder="Describe a detalle tus labores..."></textarea>
+                            <textarea name="actividades" value={formData.actividades} onChange={handleInputChange} rows="6" className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] focus:bg-white focus:border-amber-400 focus:ring-[12px] focus:ring-amber-50 outline-none transition-all resize-none font-bold text-slate-700 leading-relaxed shadow-inner" placeholder="Escribe aquí tus labores del día..."></textarea>
                         </div>
-                        <div className="group space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="list-todo" className="w-3 h-3 text-amber-500"></i> Pendientes para Mañana
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="alert-circle" className="w-4 h-4 text-amber-500"></i> Pendientes para la siguiente jornada
                             </label>
-                            <textarea name="pendientes" value={formData.pendientes} onChange={handleInputChange} rows="3" className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-50 outline-none transition-all resize-none font-medium text-slate-600 italic" placeholder="¿Qué quedó pendiente?"></textarea>
+                            <textarea name="pendientes" value={formData.pendientes} onChange={handleInputChange} rows="3" className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem] focus:bg-white focus:border-amber-400 outline-none transition-all resize-none font-bold text-slate-500 italic shadow-inner" placeholder="¿Qué quedó pendiente?"></textarea>
                         </div>
                     </div>
 
                     {/* FIRMAS */}
-                    <div className="grid grid-cols-2 gap-12 pt-10">
-                        <div className="text-center space-y-3">
-                            <div className="h-16 flex items-end justify-center font-mono italic text-slate-300 text-sm">Firma Digital Registrada</div>
-                            <div className="border-t-2 border-slate-900 pt-3">
-                                <p className="font-black text-sm uppercase tracking-tighter">{formData.nombre}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colaborador</p>
+                    <div className="grid grid-cols-2 gap-20 pt-10">
+                        <div className="text-center space-y-4">
+                            <div className="h-20 flex items-end justify-center font-mono italic text-slate-300 text-xs">FIRMA ELECTRÓNICA</div>
+                            <div className="border-t-4 border-slate-900 pt-4">
+                                <p className="font-black text-base uppercase tracking-tighter">{formData.nombre}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Colaborador / Reclutamiento</p>
                             </div>
                         </div>
-                        <div className="text-center space-y-3">
-                            <div className="h-16 flex items-end justify-center font-mono italic text-slate-300 text-sm">_________________</div>
-                            <div className="border-t-2 border-slate-900 pt-3">
-                                <p className="font-black text-sm uppercase tracking-tighter">{formData.supervisor}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Supervisor Responsable</p>
+                        <div className="text-center space-y-4">
+                            <div className="h-20 flex items-end justify-center text-slate-200 font-black">___________________________</div>
+                            <div className="border-t-4 border-slate-900 pt-4">
+                                <p className="font-black text-base uppercase tracking-tighter">{formData.supervisor}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Supervisor Responsable</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* BOTONES ORIGINALES RECUPERADOS */}
-            <div className="max-w-4xl mx-auto mt-10 flex flex-wrap gap-5 justify-center no-print">
-                <button onClick={handleSave} className={`group px-10 py-5 rounded-2xl font-black uppercase tracking-tighter shadow-2xl transition-all flex items-center gap-3 ${isSaved ? 'bg-green-500 text-white' : 'bg-slate-900 text-white hover:bg-amber-500 hover:-translate-y-1'}`}>
-                    <i data-lucide={isSaved ? "check-circle" : "cloud-upload"} className="w-5 h-5"></i>
-                    {isSaved ? '¡Sincronizado!' : 'Guardar en Nube'}
+            {/* BOTONES DE ACCIÓN */}
+            <div className="max-w-4xl mx-auto mt-12 flex flex-wrap gap-6 justify-center no-print">
+                <button onClick={handleSave} className={`px-12 py-6 rounded-2xl font-black uppercase tracking-tighter shadow-[0_20px_40px_rgba(0,0,0,0.2)] transition-all flex items-center gap-4 hover:-translate-y-2 active:translate-y-0 ${isSaved ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-amber-500'}`}>
+                    <i data-lucide={isSaved ? "check-circle-2" : "cloud-upload"} className="w-6 h-6"></i>
+                    {isSaved ? '¡REGISTRADO EN NUBE!' : 'GUARDAR EN NUBE'}
                 </button>
-                <button onClick={handlePrint} className="px-10 py-5 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl font-black uppercase tracking-tighter hover:bg-slate-50 shadow-xl flex items-center gap-3 transition-all hover:-translate-y-1">
-                    <i data-lucide="file-down" className="w-5 h-5"></i> Descargar PDF
+                <button onClick={handlePrint} className="px-12 py-6 bg-white border-4 border-slate-900 text-slate-900 rounded-2xl font-black uppercase tracking-tighter hover:bg-slate-50 shadow-xl flex items-center gap-4 transition-all hover:-translate-y-2 active:translate-y-0">
+                    <i data-lucide="file-type-2" className="w-6 h-6"></i> DESCARGAR PDF
                 </button>
-                <button onClick={handleExportExcel} className="px-10 py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-emerald-700 shadow-xl flex items-center gap-3 transition-all hover:-translate-y-1">
-                    <i data-lucide="file-spreadsheet" className="w-5 h-5"></i> Excel
+                <button onClick={handleExportExcel} className="px-12 py-6 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-tighter hover:bg-emerald-700 shadow-xl flex items-center gap-4 transition-all hover:-translate-y-2 active:translate-y-0">
+                    <i data-lucide="sheet" className="w-6 h-6"></i> EXPORTAR EXCEL
                 </button>
             </div>
 
-            {/* TOAST RECUPERADO */}
+            {/* TOAST FLOTANTE */}
             {toast && (
-                <div className={`fixed bottom-10 right-10 p-5 rounded-2xl shadow-2xl text-white font-bold animate-bounce flex items-center gap-3 z-50 ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
-                    <i data-lucide={toast.type === 'success' ? "check" : "alert-circle"}></i>
+                <div className={`fixed bottom-12 right-12 p-6 rounded-2xl shadow-2xl text-white font-black animate-bounce flex items-center gap-4 z-50 border-b-4 border-black/20 ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+                    <i data-lucide={toast.type === 'success' ? "check" : "alert-triangle"}></i>
                     {toast.message}
                 </div>
             )}
