@@ -64,7 +64,7 @@ function App() {
             if (data) {
                 const registros = Object.values(data);
                 // La diferencia es el después de registros
-                const ultimo = parseInt(registros.folio, 10);
+                const ultimo = parseInt(registros[0].folio, 10);
                 setDbFolio(String(ultimo + 1).padStart(3, '0'));
             } else {
                 setDbFolio("001");
