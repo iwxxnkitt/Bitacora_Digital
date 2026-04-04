@@ -71,7 +71,26 @@ function App() {
             }
         });
     }, []);
-
+  //NUEVO CORREGIDO 1
+    const [formData, setFormData] = useState({
+        folio: "...", 
+        fecha: localISOTime,
+        dia: getNombreDia(localISOTime),
+        entrada: horaActualStr,
+        salida: calcularSalida(horaActualStr),
+        nombre: "KITZYA MINERVA LUNA GUADARRAMA",
+        supervisor: "JAVIER TERRAZAS",
+        departamento: "Área de Reclutamiento",
+        actividades: "",
+        pendientes: ""
+    });
+  
+  useEffect(() => {
+        if (dbFolio !== "...") {
+            setFormData(prev => ({ ...prev, folio: dbFolio }));
+        }
+    }, [dbFolio]);
+  
     // Sincronizar Logs al caché del navegador al instante si bitacorasLog cambia
     useEffect(() => {
         localStorage.setItem('bitacorasRegistro', JSON.stringify(bitacorasLog));
