@@ -19,7 +19,19 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel" src="js/app.js?v=2"></script>
+    <script>
+        // Inicialización global para evitar errores de carga
+        window.lucide = lucide;
+    </script>
+
+    <script type="text/babel">
+        // PEGA AQUÍ TODO EL CONTENIDO DE TU ARCHIVO APP.JS
+        const { useState, useEffect, useRef } = React;
+        // Asegúrate de que esta línea esté al final del script:
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
+
 
