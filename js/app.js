@@ -71,6 +71,13 @@ function App() {
         });
     }, []);
 
+    // Efecto para actualizar el folio en cuanto llegue de la nube
+    useEffect(() => {
+        if (dbFolio !== "...") {
+            setFormData(prev => ({ ...prev, folio: dbFolio }));
+        }
+    }, [dbFolio]);
+
     const [formData, setFormData] = useState({
         folio: "001", // Valor temporal
         fecha: localISOTime,
@@ -90,19 +97,6 @@ function App() {
             setFormData(prev => ({ ...prev, folio: dbFolio }));
         }
     }, [dbFolio]);
-
-    const [formData, setFormData] = useState({
-        folio: getNextFolioStr(bitacorasLog),
-        fecha: localISOTime,
-        dia: getNombreDia(localISOTime),
-        entrada: horaActualStr,
-        salida: calcularSalida(horaActualStr),
-        nombre: "KITZYA MINERVA LUNA GUADARRAMA",
-        supervisor: "JAVIER TERRAZAS",
-        departamento: "Área de Reclutamiento",
-        actividades: "",
-        pendientes: ""
-    });
 
     // Sincronizar Logs al caché del navegador al instante si bitacorasLog cambia
     useEffect(() => {
@@ -152,6 +146,7 @@ function App() {
     const handleSave = () => {
         if (validateFields()) {
             setIsSaved(true);
+            database.ref('bitacoras/' + formData.folio).set(formData);
 
             // GUARDAR O ACTUALIZAR en el historial local (Excel Database)
             setBitacorasLog(prev => {
