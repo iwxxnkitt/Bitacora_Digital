@@ -54,16 +54,42 @@ function App() {
         catch (e) { return []; }
     });
 
-    // Auto-generar el siguiente folio buscando el máximo almacenado
-    const getNextFolioStr = (logs) => {
-        if (!logs || logs.length === 0) return "001";
-        let max = 0;
-        logs.forEach(l => {
-            const num = parseInt(l.folio, 10);
-            if (!isNaN(num) && num > max) max = num;
+    // Buscamos el folio en la nube al cargar
+    const [dbFolio, setDbFolio] = useState("...");
+
+    useEffect(() => {
+        const bitacoraRef = database.ref('bitacoras');
+        bitacoraRef.limitToLast(1).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const registros = Object.values(data);
+                const ultimo = parseInt(registros.folio, 10);
+                setDbFolio(String(ultimo + 1).padStart(3, '0'));
+            } else {
+                setDbFolio("001");
+            }
         });
-        return String(max + 1).padStart(3, '0');
-    };
+    }, []);
+
+    const [formData, setFormData] = useState({
+        folio: "001", // Valor temporal
+        fecha: localISOTime,
+        dia: getNombreDia(localISOTime),
+        entrada: horaActualStr,
+        salida: calcularSalida(horaActualStr),
+        nombre: "KITZYA MINERVA LUNA GUADARRAMA",
+        supervisor: "JAVIER TERRAZAS",
+        departamento: "Área de Reclutamiento",
+        actividades: "",
+        pendientes: ""
+    });
+
+    // Actualizamos el folio en el form cuando llegue de la nube
+    useEffect(() => {
+        if (dbFolio !== "...") {
+            setFormData(prev => ({ ...prev, folio: dbFolio }));
+        }
+    }, [dbFolio]);
 
     const [formData, setFormData] = useState({
         folio: getNextFolioStr(bitacorasLog),
