@@ -72,14 +72,6 @@ function App() {
         });
     }, []);
 
-    // Efecto para actualizar el folio en cuanto llegue de la nube
-    useEffect(() => {
-        if (dbFolio !== "...") {
-            setFormData(prev => ({ ...prev, folio: dbFolio }));
-        }
-    }, [dbFolio]);
-
-
     // Sincronizar Logs al caché del navegador al instante si bitacorasLog cambia
     useEffect(() => {
         localStorage.setItem('bitacorasRegistro', JSON.stringify(bitacorasLog));
