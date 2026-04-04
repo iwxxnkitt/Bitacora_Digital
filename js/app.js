@@ -13,6 +13,8 @@ const database = firebase.database();
 
 const { useState, useEffect, useRef } = React;
 
+const MAX_IMAGES_PER_PAGE = 4;
+
 function App() {
     const printRef = useRef(null);
     const [images, setImages] = useState([]);
@@ -23,6 +25,7 @@ function App() {
     const nombreRef = useRef(null);
     const fechaRef = useRef(null);
     const entradaRef = useRef(null);
+    const salidaRef = useRef(null);
     const actividadesRef = useRef(null);
 
     const now = new Date();
@@ -65,14 +68,13 @@ function App() {
         pendientes: ""
     });
 
-    // ESCUCHA DE FIREBASE PARA EL FOLIO (CORREGIDO CON)
     useEffect(() => {
         const bitacoraRef = database.ref('bitacoras');
         bitacoraRef.limitToLast(1).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 const registros = Object.values(data);
-                const ultimo = parseInt(registros.folio, 10); // Arreglo del NaN
+                const ultimo = parseInt(registros.folio, 10);
                 const siguiente = String(ultimo + 1).padStart(3, '0');
                 setDbFolio(siguiente);
                 setFormData(prev => ({ ...prev, folio: siguiente }));
@@ -88,33 +90,32 @@ function App() {
     }, [bitacorasLog]);
 
     const validateFields = () => {
-        if (formData.folio === "..." || !formData.nombre.trim() || !formData.actividades.trim()) {
-            setToast({ type: 'error', title: 'Error', message: 'Datos incompletos o cargando folio.', icon: 'alert-circle' });
+        const { folio, nombre, actividades } = formData;
+        if (folio === "..." || !nombre.trim() || !actividades.trim()) {
+            setToast({ type: 'error', title: 'Datos Faltantes', message: 'Nombre y Actividades son obligatorios.', icon: 'alert-circle' });
             return false;
         }
         return true;
     };
 
-    // --- LA FUNCIÓN QUE SÍ GUARDA (FIX FINAL) ---
+    // --- FUNCIÓN DE GUARDADO CON VERIFICACIÓN DE FIREBASE ---
     const handleSave = () => {
         if (validateFields()) {
-            // Referencia directa al folio para evitar errores de estado
-            const folioActual = formData.folio;
+            const folioID = formData.folio;
             
-            // 1. GUARDAR EN FIREBASE (FORZADO)
-            database.ref('bitacoras/' + folioActual).set(formData, (error) => {
+            // INTENTO DE ESCRITURA FORZADA
+            database.ref('bitacoras/' + folioID).set(formData, (error) => {
                 if (error) {
-                    setToast({ type: 'error', title: 'Error Cloud', message: 'No se pudo subir a la base de datos.', icon: 'cloud-off' });
+                    setToast({ type: 'error', title: 'Error de Base de Datos', message: 'Firebase rechazó el guardado. Revisa las reglas de seguridad.', icon: 'cloud-off' });
                 } else {
                     setIsSaved(true);
-                    setToast({ type: 'success', title: '¡Guardado!', message: `Bitácora ${folioActual} sincronizada con éxito.`, icon: 'cloud-check' });
+                    setToast({ type: 'success', title: '¡Éxito Total!', message: `Bitácora ${folioID} guardada en la nube.`, icon: 'cloud-check' });
                     
-                    // 2. ACTUALIZAR HISTORIAL LOCAL SOLO SI SUBIÓ A LA NUBE
                     setBitacorasLog(prev => {
-                        const existingIndex = prev.findIndex(item => item.folio === folioActual);
+                        const existingIndex = prev.findIndex(item => item.folio === folioID);
                         const newData = [...prev];
                         const row = {
-                            folio: folioActual,
+                            folio: folioID,
                             fecha: formData.fecha,
                             dia: formData.dia,
                             colaborador: formData.nombre,
@@ -132,7 +133,7 @@ function App() {
                 }
             });
 
-            setTimeout(() => setToast(null), 4000);
+            setTimeout(() => setToast(null), 5000);
         }
     };
 
@@ -187,132 +188,141 @@ function App() {
     return (
         <div className="main-layout flex-row-reverse relative h-screen bg-slate-100 overflow-hidden">
             {toast && (
-                <div className="fixed top-6 right-6 z-50 flex items-center gap-4 px-5 py-4 rounded-xl shadow-2xl bg-white border-l-4 border-blue-600">
-                    <div className="font-black text-[10px] uppercase tracking-widest">{toast.title}: {toast.message}</div>
+                <div className={`fixed top-6 right-6 z-50 flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl bg-white border-l-8 ${toast.type === 'error' ? 'border-red-500' : 'border-green-500'} animate-bounce`}>
+                    <div className="font-black text-xs uppercase tracking-tighter">{toast.title}: {toast.message}</div>
                 </div>
             )}
 
-            {/* PANEL FORMULARIO */}
-            <div className="form-panel no-print p-6 w-[420px] bg-white shadow-xl flex flex-col h-full border-l overflow-y-auto">
-                <header className="border-b pb-4 mb-4 flex justify-between items-center">
+            {/* PANEL LATERAL */}
+            <div className="form-panel no-print p-8 w-[450px] bg-white shadow-2xl flex flex-col h-full border-l overflow-y-auto">
+                <header className="border-b-2 border-slate-100 pb-6 mb-6 flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-black text-slate-800">Panel Digital</h2>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Shop Center</p>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">Panel de Control</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronización en Tiempo Real</p>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={exportToExcel} className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100"><i data-lucide="table" className="w-5 h-5"></i></button>
-                        <button onClick={handleReset} className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-red-50 hover:text-red-500"><i data-lucide="refresh-ccw" className="w-5 h-5"></i></button>
+                        <button onClick={exportToExcel} className="p-3 bg-green-50 text-green-600 rounded-xl hover:scale-110 transition-transform"><i data-lucide="table"></i></button>
+                        <button onClick={handleReset} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:text-red-500 transition-colors"><i data-lucide="refresh-ccw"></i></button>
                     </div>
                 </header>
 
-                <div className={`space-y-4 flex-1 transition-opacity ${isSaved ? 'opacity-50' : 'opacity-100'}`}>
-                    <div className="flex gap-2">
-                        <div className="w-1/3">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Folio</label>
-                            <input type="text" value={formData.folio} className="w-full p-2 bg-indigo-50 font-black rounded-lg text-indigo-900 border border-indigo-100" readOnly />
+                <div className={`space-y-6 flex-1 ${isSaved ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Folio</label>
+                            <input type="text" value={formData.folio} className="w-full p-3 bg-indigo-50 border-2 border-indigo-100 rounded-xl font-black text-indigo-600 text-center" readOnly />
                         </div>
-                        <div className="w-2/3">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Colaborador</label>
-                            <input ref={nombreRef} type="text" value={formData.nombre} className="w-full p-2 border border-slate-200 rounded-lg text-sm font-bold" onChange={e => setFormData({...formData, nombre: e.target.value})} readOnly={isSaved} />
+                        <div className="col-span-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Colaborador</label>
+                            <input ref={nombreRef} type="text" value={formData.nombre} className="w-full p-3 border-2 border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" onChange={e => setFormData({...formData, nombre: e.target.value})} />
                         </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                        <div className="flex-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Fecha</label>
-                            <input ref={fechaRef} type="date" value={formData.fecha} className="w-full p-2 border border-slate-200 rounded-lg text-sm font-bold" onChange={handleFechaChange} readOnly={isSaved} />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Fecha</label>
+                            <input ref={fechaRef} type="date" value={formData.fecha} className="w-full p-3 border-2 border-slate-100 rounded-xl text-sm font-bold" onChange={handleFechaChange} />
                         </div>
-                        <div className="flex-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Horario</label>
-                            <input type="time" value={formData.entrada} className="w-full p-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold" onChange={handleEntradaChange} readOnly={isSaved} />
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Entrada</label>
+                            <input type="time" value={formData.entrada} className="w-full p-3 border-2 border-blue-100 bg-blue-50/30 text-blue-600 rounded-xl text-sm font-black" onChange={handleEntradaChange} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Actividades del Día</label>
-                        <textarea ref={actividadesRef} value={formData.actividades} className="w-full p-3 border border-slate-200 rounded-xl text-sm h-40 resize-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Escribe aquí..." onChange={e => setFormData({ ...formData, actividades: e.target.value })} readOnly={isSaved} />
+                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Actividades Realizadas</label>
+                        <textarea ref={actividadesRef} value={formData.actividades} className="w-full p-4 border-2 border-slate-100 rounded-2xl text-sm h-48 resize-none focus:border-blue-500 outline-none leading-relaxed" placeholder="Describe tus labores..." onChange={e => setFormData({ ...formData, actividades: e.target.value })} />
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold text-orange-500 uppercase block mb-1">Pendientes</label>
-                        <textarea value={formData.pendientes} className="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl text-sm h-20 resize-none outline-none" onChange={e => setFormData({ ...formData, pendientes: e.target.value })} readOnly={isSaved} />
+                        <label className="text-[10px] font-black text-orange-400 uppercase mb-2 block">Pendientes Especiales</label>
+                        <textarea value={formData.pendientes} className="w-full p-4 border-2 border-orange-50 bg-orange-50/20 rounded-2xl text-sm h-20 resize-none outline-none" onChange={e => setFormData({ ...formData, pendientes: e.target.value })} />
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Fotos (Max 4)</label>
-                        <input type="file" multiple onChange={handleImageUpload} disabled={isSaved} className="w-full text-[10px] mt-1 file:bg-slate-800 file:text-white file:rounded-lg file:px-3 file:py-2 file:border-0 cursor-pointer" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Cargar Evidencias (JPG/PNG)</label>
+                        <input type="file" multiple onChange={handleImageUpload} className="w-full text-[10px] file:bg-slate-900 file:text-white file:rounded-xl file:px-4 file:py-2 file:border-0 cursor-pointer" />
                     </div>
                 </div>
 
-                <div className="pt-6 border-t mt-4">
+                <div className="pt-8 border-t-2 border-slate-50 mt-auto">
                     {!isSaved ? (
-                        <button onClick={handleSave} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-lg transition-all">
-                             Guardar en Firebase
+                        <button onClick={handleSave} className="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-700 shadow-2xl transform hover:-translate-y-2 transition-all">
+                             Sincronizar con Firebase
                         </button>
                     ) : (
-                        <div className="flex gap-3">
-                            <button onClick={handleEdit} className="flex-1 bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-[10px] uppercase">Editar</button>
-                            <button onClick={downloadPDF} className="flex- bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-xl">Descargar PDF</button>
+                        <div className="flex gap-4">
+                            <button onClick={handleEdit} className="flex-1 bg-slate-100 text-slate-500 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200">Editar</button>
+                            <button onClick={downloadPDF} className="flex- bg-slate-900 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:shadow-2xl transition-shadow">Descargar Bitácora PDF</button>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* VISTA PREVIA PDF */}
-            <div className="preview-panel flex-1 bg-slate-200 overflow-y-auto p-12 custom-scrollbar">
+            {/* VISTA PREVIA */}
+            <div className="preview-panel flex-1 bg-slate-200 overflow-y-auto p-16 custom-scrollbar">
                 <div id="print-area" className="flex flex-col w-full items-center">
-                    <div ref={printRef} className="letter-sheet bg-white p-16 shadow-2xl flex flex-col justify-between overflow-hidden" style={{width: '215.9mm', minHeight: '279.4mm'}}>
+                    <div ref={printRef} className="letter-sheet bg-white p-20 shadow-2xl flex flex-col justify-between overflow-hidden" style={{width: '215.9mm', minHeight: '279.4mm'}}>
                         <div className="w-full">
-                            <header className="flex justify-between border-b-4 border-slate-800 pb-6 mb-10">
+                            <header className="flex justify-between border-b-8 border-slate-900 pb-10 mb-12">
                                 <div>
-                                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase leading-none">Bitácora Laboral</h1>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase mt-2">Digital Shop Center | Página 1</p>
+                                    <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">Bitácora</h1>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] mt-4">Digital Shop Center | México</p>
                                 </div>
                                 <div className="text-right">
-                                    <div className="bg-slate-900 text-white px-5 py-2 font-black text-lg rounded-sm mb-2">FOLIO: {formData.folio}</div>
-                                    <p className="text-xs font-black text-slate-800 uppercase tracking-widest leading-loose">Fecha: {formData.fecha}</p>
+                                    <div className="bg-slate-900 text-white px-8 py-3 font-black text-2xl rounded-sm mb-4">FOLIO: {formData.folio}</div>
+                                    <p className="text-sm font-black text-slate-900 uppercase tracking-widest">Fecha: {formData.fecha}</p>
+                                    <p className="text-sm font-black text-slate-400 uppercase italic tracking-widest">{formData.dia}</p>
                                 </div>
                             </header>
 
-                            <div className="grid grid-cols-2 gap-8 bg-slate-50 border-2 border-slate-100 rounded-2xl p-6 text-[11px] uppercase mb-10">
-                                <div><span className="font-black text-slate-400 block text-[9px] mb-1">Colaborador:</span><span className="font-black text-slate-900 text-sm">{formData.nombre}</span></div>
-                                <div><span className="font-black text-slate-400 block text-[9px] mb-1">Horario:</span><span className="font-black text-blue-700">{formData.entrada} - {formData.salida}</span></div>
+                            <div className="grid grid-cols-2 gap-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] p-10 text-xs uppercase mb-12">
+                                <div><span className="font-black text-slate-400 block text-[10px] mb-2 tracking-widest">Responsable:</span><span className="font-black text-slate-900 text-lg leading-none">{formData.nombre}</span></div>
+                                <div><span className="font-black text-slate-400 block text-[10px] mb-2 tracking-widest">Supervisor Asignado:</span><span className="font-black text-slate-900 text-lg leading-none">{formData.supervisor}</span></div>
+                                <div><span className="font-black text-slate-400 block text-[10px] mb-2 tracking-widest">Área de Trabajo:</span><span className="font-black text-slate-900">{formData.departamento}</span></div>
+                                <div><span className="font-black text-slate-400 block text-[10px] mb-2 tracking-widest">Jornada Laboral:</span><span className="font-black text-blue-700 bg-white px-4 py-1.5 border-2 rounded-full inline-block mt-1">{formData.entrada} - {formData.salida}</span></div>
                             </div>
 
-                            <section className="mb-10">
-                                <h3 className="text-xs font-black uppercase text-slate-900 border-b-2 border-slate-100 pb-2 mb-4">1. Actividades</h3>
-                                <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed min-h-[120px]">{formData.actividades || "Sin registro."}</div>
+                            <section className="mb-12">
+                                <h3 className="text-sm font-black uppercase text-slate-900 border-b-4 border-slate-900 pb-3 mb-6 tracking-widest">Resumen de Actividades</h3>
+                                <div className="text-base text-slate-700 whitespace-pre-wrap leading-relaxed min-h-[150px] font-medium">{formData.actividades || "Pendiente de registro..."}</div>
                             </section>
 
                             <section>
-                                <h3 className="text-xs font-black uppercase text-slate-900 border-b-2 border-slate-100 pb-2 mb-6">Evidencias</h3>
-                                <div className="grid grid-cols-2 gap-6">
+                                <h3 className="text-sm font-black uppercase text-slate-900 border-b-4 border-slate-900 pb-3 mb-8 tracking-widest">Anexos Fotográficos</h3>
+                                <div className="grid grid-cols-2 gap-8">
                                     {images.map((img, i) => (
-                                        <div key={img.id || i} className="border-4 border-slate-50 rounded-xl overflow-hidden aspect-video bg-slate-100 flex items-center justify-center">
+                                        <div key={img.id || i} className="border-8 border-slate-50 rounded-[2rem] overflow-hidden aspect-video bg-slate-100 flex items-center justify-center shadow-lg">
                                             <img src={img.url || img} className="max-h-full object-contain" />
                                         </div>
                                     ))}
+                                    {images.length === 0 && <div className="col-span-2 border-4 border-dashed border-slate-100 rounded-3xl p-10 text-center font-black text-slate-200 uppercase tracking-widest">Sin Evidencia Cargada</div>}
                                 </div>
                             </section>
                         </div>
 
-                        <footer className="mt-20 flex justify-around border-t-4 border-slate-900 pt-10">
-                            <div className="w-1/3 border-t border-slate-300 pt-4 text-center font-black text-[10px] uppercase">Firma Colaborador</div>
-                            <div className="w-1/3 border-t border-slate-300 pt-4 text-center font-black text-[10px] uppercase">Firma Supervisor</div>
+                        <footer className="mt-24 flex justify-around border-t-8 border-slate-900 pt-12">
+                            <div className="text-center w-1/3">
+                                <div className="border-t-2 border-slate-300 pt-6"><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-800">Firma Colaborador</p></div>
+                            </div>
+                            <div className="text-center w-1/3">
+                                <div className="border-t-2 border-slate-300 pt-6"><p className="text-xs font-black uppercase tracking-[0.3em] text-slate-800">Firma Autorización</p></div>
+                            </div>
                         </footer>
                     </div>
                 </div>
             </div>
 
-            {/* MODAL RESET */}
+            {/* MODAL */}
             {showResetModal && (
-                <div className="fixed inset-0 z- bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[3rem] p-12 max-w-sm w-full text-center">
-                        <h3 className="text-2xl font-black text-slate-900 uppercase mb-2 tracking-tighter">¿Reiniciar?</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-10 leading-relaxed italic">Se borrarán los datos de esta sesión.</p>
-                        <div className="flex gap-4 uppercase font-black text-[10px] tracking-widest">
-                            <button onClick={() => setShowResetModal(false)} className="flex-1 py-4 bg-slate-100 rounded-2xl text-slate-500">No</button>
-                            <button onClick={confirmReset} className="flex-1 py-4 bg-red-600 rounded-2xl text-white shadow-xl">Sí, Borrar</button>
+                <div className="fixed inset-0 z- bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
+                    <div className="bg-white rounded-[4rem] p-16 max-w-md w-full text-center shadow-[0_40px_100px_rgba(0,0,0,0.5)] border-t-8 border-red-500">
+                        <div className="bg-red-50 text-red-500 p-8 rounded-full w-fit mx-auto mb-10 ring-[1rem] ring-red-50/50"><i data-lucide="trash-2" className="w-16 h-16"></i></div>
+                        <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">¿Deseas Reiniciar?</h3>
+                        <p className="text-xs font-black text-slate-400 uppercase mb-12 leading-loose tracking-widest italic opacity-60">Se eliminará el progreso de esta bitácora actual de forma permanente.</p>
+                        <div className="flex gap-6 uppercase font-black text-xs tracking-[0.2em]">
+                            <button onClick={() => setShowResetModal(false)} className="flex-1 py-6 bg-slate-100 rounded-[2rem] text-slate-500 hover:bg-slate-200 transition-all">Cancelar</button>
+                            <button onClick={confirmReset} className="flex-1 py-6 bg-red-600 rounded-[2rem] text-white hover:bg-red-700 shadow-2xl transform hover:-translate-y-2 transition-all">Sí, Borrar</button>
                         </div>
                     </div>
                 </div>
@@ -322,4 +332,5 @@ function App() {
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);t.getElementById('root'));
 root.render(<App />);
