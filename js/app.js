@@ -57,12 +57,13 @@ function App() {
     // Buscamos el folio en la nube al cargar
     const [dbFolio, setDbFolio] = useState("...");
 
-    useEffect(() => {
+   useEffect(() => {
         const bitacoraRef = database.ref('bitacoras');
         bitacoraRef.limitToLast(1).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 const registros = Object.values(data);
+                // La diferencia es el después de registros
                 const ultimo = parseInt(registros.folio, 10);
                 setDbFolio(String(ultimo + 1).padStart(3, '0'));
             } else {
