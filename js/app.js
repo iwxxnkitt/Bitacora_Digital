@@ -1,3 +1,16 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyCwLE85BsJw5FwFtjUGLSCxHPJLXB8t4Nk",
+  authDomain: "bitacora-db.firebaseapp.com",
+  projectId: "bitacora-db",
+  storageBucket: "bitacora-db.firebasestorage.app",
+  messagingSenderId: "661079601361",
+  appId: "1:661079601361:web:837756ba7a91a576cad5f8",
+  databaseURL: "https://bitacora-db-default-rtdb.firebaseio.com/"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 const { useState, useEffect, useRef } = React;
 
 const MAX_IMAGES_PER_PAGE = 4;
