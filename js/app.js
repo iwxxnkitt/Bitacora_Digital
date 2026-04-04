@@ -78,19 +78,6 @@ function App() {
         }
     }, [dbFolio]);
 
-    const [formData, setFormData] = useState({
-        folio: "001", // Valor temporal
-        fecha: localISOTime,
-        dia: getNombreDia(localISOTime),
-        entrada: horaActualStr,
-        salida: calcularSalida(horaActualStr),
-        nombre: "KITZYA MINERVA LUNA GUADARRAMA",
-        supervisor: "JAVIER TERRAZAS",
-        departamento: "Área de Reclutamiento",
-        actividades: "",
-        pendientes: ""
-    });
-
     // Actualizamos el folio en el form cuando llegue de la nube
     useEffect(() => {
         if (dbFolio !== "...") {
